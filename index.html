@@ -7,464 +7,352 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="theme-color" content="#0b1020" />
 <title>Nighttime Routine</title>
-<style>
-  :root {
-    --bg: #0b1020;
-    --bg-2: #131a33;
-    --card: #1a2244;
-    --text: #e8ecff;
-    --muted: #8a93b8;
-    --accent: #6c8cff;
-    --good: #2ecc71;
-    --danger: #ff5c7a;
-    --row-h: 64px;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Helvetica Neue"', 'Arial', 'sans-serif']
+        },
+        boxShadow: {
+          'card': '0 1px 0 rgba(255,255,255,0.04) inset, 0 10px 30px -10px rgba(0,0,0,0.5)'
+        }
+      }
+    }
+  };
+</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client?deps=react@18.3.1",
+    "htm": "https://esm.sh/htm@3.1.1",
+    "framer-motion": "https://esm.sh/framer-motion@11.11.17?deps=react@18.3.1,react-dom@18.3.1"
   }
-  * { box-sizing: border-box; }
+}
+</script>
+
+<style>
   html, body {
-    margin: 0;
-    padding: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -webkit-tap-highlight-color: transparent;
+    background: #0b1020;
+    color: #e8ecff;
     overscroll-behavior-y: contain;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
   }
   body {
     min-height: 100vh;
-    padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);
-    max-width: 640px;
-    margin: 0 auto;
-  }
-  header {
-    margin-bottom: 16px;
-  }
-  header h1 {
+    min-height: 100dvh;
     margin: 0;
-    font-size: 28px;
-    letter-spacing: -0.02em;
+    visibility: hidden;
   }
-  header .sub {
-    color: var(--muted);
-    font-size: 14px;
-    margin-top: 4px;
-  }
-  .stats {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 12px 0 16px;
-    font-size: 13px;
-    color: var(--muted);
-  }
-  .stats button {
-    background: transparent;
-    color: var(--accent);
-    border: 1px solid rgba(108, 140, 255, 0.4);
-    border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 13px;
-    cursor: pointer;
-  }
-  .add-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  .add-row input {
-    flex: 1;
-    background: var(--bg-2);
-    border: 1px solid rgba(255,255,255,0.08);
-    color: var(--text);
-    padding: 14px 14px;
-    border-radius: 12px;
-    font-size: 16px;
-    outline: none;
-  }
-  .add-row input:focus {
-    border-color: var(--accent);
-  }
-  .add-row button {
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 0 18px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .item {
-    position: relative;
-    height: var(--row-h);
-    margin-bottom: 10px;
-    border-radius: 14px;
-    overflow: hidden;
-    background: var(--good);
-  }
-  .item .bg-label {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    padding-left: 24px;
-    font-weight: 700;
-    color: white;
-    letter-spacing: 0.04em;
-    pointer-events: none;
-  }
-  .item .bg-label svg {
-    margin-right: 8px;
-  }
-  .item .surface {
-    position: relative;
-    z-index: 1;
-    height: 100%;
-    background: var(--card);
-    display: flex;
-    align-items: center;
-    padding: 0 14px 0 18px;
-    border-radius: 14px;
-    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 20px rgba(0,0,0,0.25);
-    will-change: transform;
-    touch-action: pan-y;
-  }
-  .item .surface.dragging {
-    transition: none;
-  }
-  .item .surface.snap {
-    transition: transform 220ms cubic-bezier(.2,.8,.2,1);
-  }
-  .item .text {
-    flex: 1;
-    font-size: 17px;
-    line-height: 1.25;
-    padding-right: 12px;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-  .item .del {
-    background: transparent;
-    border: none;
-    color: var(--muted);
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    font-size: 22px;
-    line-height: 1;
-    cursor: pointer;
-    flex: 0 0 auto;
-  }
-  .item .del:active {
-    color: var(--danger);
-    background: rgba(255, 92, 122, 0.12);
-  }
-  .item.removing {
-    transition: height 260ms ease, margin 260ms ease, opacity 200ms ease;
-    height: 0;
-    margin-bottom: 0;
-    opacity: 0;
-  }
-  .empty {
-    text-align: center;
-    color: var(--muted);
-    padding: 40px 16px;
-    font-size: 15px;
-    line-height: 1.5;
-  }
-  .hint {
-    text-align: center;
-    color: var(--muted);
-    font-size: 12px;
-    margin-top: 12px;
-  }
+  body.ready { visibility: visible; }
+  input, textarea, button { font-family: inherit; }
+  /* Stop iOS from zooming the viewport when input is focused */
+  input { font-size: 16px; }
 </style>
 </head>
 <body>
-  <header>
-    <h1>Nighttime Routine</h1>
-    <div class="sub" id="dateLine"></div>
-  </header>
+  <div id="root"></div>
 
-  <div class="stats">
-    <span id="counter">0 left</span>
-    <button id="resetBtn" type="button">Reset for Tonight</button>
-  </div>
+<script type="module">
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createRoot } from 'react-dom/client';
+import htm from 'htm';
+import { motion, AnimatePresence } from 'framer-motion';
 
-  <form class="add-row" id="addForm">
-    <input id="addInput" type="text" placeholder="Add an item…" autocomplete="off" />
-    <button type="submit">Add</button>
-  </form>
+const html = htm.bind(React.createElement);
 
-  <ul id="list"></ul>
-  <div class="hint">Swipe right to complete · Tap × to remove</div>
+const STORAGE_KEY = 'nighttime-routine.v1';
+const SWIPE_THRESHOLD = 0.35;
+const SWIPE_VELOCITY = 0.5;
 
-<script>
-(function () {
-  "use strict";
+const DEFAULT_ITEMS = [
+  "Go through backpacks",
+  "Fill up water bottles",
+  "Make lunches",
+  "Lay out Aubrey's hair stuff and lotion",
+  "Pick out kids' clothes",
+  "Review next day's calendar",
+  "Plan out next day (lead, make decisions)",
+  "Set alarm",
+  "Take GABA, allergy pills, hair pills",
+  "Lay out work clothes",
+  "Plan next day workout",
+  "Lay out workout clothes",
+  "Get workout bag ready",
+  "Put coffee cup by the fridge",
+  "Prep pre-workout",
+  "16 oz of water in shaker bottle",
+  "Give kids allergy medicine and vitamins",
+  "Brush teeth, floss, mouthwash"
+];
 
-  const STORAGE_KEY = "nighttime-routine.v1";
-  const SWIPE_THRESHOLD = 0.45; // fraction of row width
-  const SWIPE_VELOCITY = 0.6;   // px/ms
+const makeId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const makeItem = (text) => ({ id: makeId(), text, done: false });
 
-  const DEFAULT_ITEMS = [
-    "Go through backpacks",
-    "Fill up water bottles",
-    "Make lunches",
-    "Lay out Aubrey's hair stuff and lotion",
-    "Pick out kids' clothes",
-    "Review next day's calendar",
-    "Plan out next day (lead, make decisions)",
-    "Set alarm",
-    "Take GABA, allergy pills, hair pills",
-    "Lay out work clothes",
-    "Plan next day workout",
-    "Lay out workout clothes",
-    "Get workout bag ready",
-    "Put coffee cup by the fridge",
-    "Prep pre-workout",
-    "16 oz of water in shaker bottle",
-    "Give kids allergy medicine and vitamins",
-    "Brush teeth, floss, mouthwash"
-  ];
-
-  const listEl = document.getElementById("list");
-  const counterEl = document.getElementById("counter");
-  const dateLineEl = document.getElementById("dateLine");
-  const addForm = document.getElementById("addForm");
-  const addInput = document.getElementById("addInput");
-  const resetBtn = document.getElementById("resetBtn");
-
-  /** state shape: { items: [{ id, text, done }] } */
-  let state = load();
-
-  function load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && Array.isArray(parsed.items)) return parsed;
-      }
-    } catch (e) { /* fall through */ }
-    return { items: DEFAULT_ITEMS.map(makeItem) };
-  }
-
-  function save() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (e) { /* quota or private mode — ignore */ }
-  }
-
-  function makeItem(text) {
-    return {
-      id: (Date.now().toString(36) + Math.random().toString(36).slice(2, 7)),
-      text: text,
-      done: false
-    };
-  }
-
-  function setDateLine() {
-    const d = new Date();
-    const opts = { weekday: "long", month: "long", day: "numeric" };
-    dateLineEl.textContent = d.toLocaleDateString(undefined, opts);
-  }
-
-  function updateCounter() {
-    const left = state.items.filter(i => !i.done).length;
-    counterEl.textContent = left + (left === 1 ? " left" : " left");
-  }
-
-  function render() {
-    listEl.innerHTML = "";
-    const visible = state.items.filter(i => !i.done);
-    if (visible.length === 0) {
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.innerHTML = "All done for tonight ✨<br/>Tap <em>Reset for Tonight</em> when you're ready.";
-      listEl.appendChild(empty);
-    } else {
-      for (const item of visible) {
-        listEl.appendChild(renderItem(item));
-      }
+function loadItems() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.items)) return parsed.items;
     }
-    updateCounter();
-  }
+  } catch (e) { /* ignore */ }
+  return DEFAULT_ITEMS.map(makeItem);
+}
 
-  function renderItem(item) {
-    const li = document.createElement("li");
-    li.className = "item";
-    li.dataset.id = item.id;
+function App() {
+  const [items, setItems] = useState(loadItems);
+  const [draft, setDraft] = useState('');
 
-    const bg = document.createElement("div");
-    bg.className = "bg-label";
-    bg.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> DONE';
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ items })); } catch (e) {}
+  }, [items]);
 
-    const surface = document.createElement("div");
-    surface.className = "surface";
-
-    const text = document.createElement("div");
-    text.className = "text";
-    text.textContent = item.text;
-
-    const del = document.createElement("button");
-    del.className = "del";
-    del.type = "button";
-    del.setAttribute("aria-label", "Remove item");
-    del.textContent = "×";
-    del.addEventListener("click", function (e) {
-      e.stopPropagation();
-      removeItem(item.id);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => document.body.classList.add('ready'));
     });
+    return () => cancelAnimationFrame(id);
+  }, []);
 
-    surface.appendChild(text);
-    surface.appendChild(del);
-    li.appendChild(bg);
-    li.appendChild(surface);
+  const visible = items.filter(i => !i.done);
+  const total = items.length;
+  const left = visible.length;
+  const completed = total - left;
 
-    attachSwipe(li, surface, item.id);
-    return li;
-  }
+  const dateLine = useMemo(
+    () => new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }),
+    []
+  );
 
-  function attachSwipe(li, surface, id) {
-    let startX = 0;
-    let startY = 0;
-    let startT = 0;
-    let dx = 0;
-    let dragging = false;
-    let locked = null; // null | "x" | "y"
+  const completeItem = useCallback((id) => {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, done: true } : i));
+  }, []);
+
+  const removeItem = useCallback((id) => {
+    setItems(prev => prev.filter(i => i.id !== id));
+  }, []);
+
+  const addItem = useCallback((e) => {
+    e.preventDefault();
+    const t = draft.trim();
+    if (!t) return;
+    setItems(prev => [...prev, makeItem(t)]);
+    setDraft('');
+  }, [draft]);
+
+  const reset = useCallback(() => {
+    if (completed === 0) return;
+    if (!confirm(`Reset ${completed} completed item${completed === 1 ? '' : 's'} back to the list?`)) return;
+    setItems(prev => prev.map(i => ({ ...i, done: false })));
+  }, [completed]);
+
+  const progressPct = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+  return html`
+    <div
+      className="min-h-dvh bg-gradient-to-b from-[#0b1020] via-[#131a40] to-[#0b1020] text-slate-100"
+      style=${{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
+      <div className="max-w-2xl mx-auto px-4 pt-6 pb-10">
+        <header className="mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-2xl" aria-hidden="true">🌙</span>
+            <h1 className="text-3xl font-semibold tracking-tight">Nighttime Routine</h1>
+          </div>
+          <p className="text-sm text-slate-400">${dateLine}</p>
+        </header>
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-4 mb-5 shadow-card">
+          <div className="flex items-center justify-between mb-3 text-sm">
+            <span className="text-slate-300">
+              <span className="text-indigo-300 font-semibold text-base">${left}</span>
+              <span className="text-slate-400"> ${left === 1 ? 'item' : 'items'} left</span>
+              ${total > 0 && html`<span className="text-slate-500"> · ${completed}/${total} done</span>`}
+            </span>
+            <button
+              onClick=${reset}
+              type="button"
+              disabled=${completed === 0}
+              className="text-xs font-medium px-3 py-1.5 rounded-full border border-indigo-400/30 text-indigo-200 hover:border-indigo-400/60 hover:text-white active:bg-indigo-500/20 disabled:opacity-40 disabled:hover:border-indigo-400/30 disabled:hover:text-indigo-200 transition-colors"
+            >
+              Reset for Tonight
+            </button>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-indigo-400 to-fuchsia-400 transition-all duration-500 ease-out"
+              style=${{ width: progressPct + '%' }}
+            />
+          </div>
+        </div>
+
+        <form onSubmit=${addItem} className="flex gap-2 mb-5">
+          <input
+            value=${draft}
+            onChange=${(e) => setDraft(e.target.value)}
+            type="text"
+            placeholder="Add an item…"
+            autoComplete="off"
+            className="flex-1 bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 placeholder-slate-500 focus:border-indigo-400/60 focus:bg-slate-900/80 focus:outline-none transition-colors"
+          />
+          <button
+            type="submit"
+            className="bg-indigo-500 hover:bg-indigo-400 active:bg-indigo-600 text-white px-5 rounded-xl font-medium shadow-lg shadow-indigo-900/40 transition-colors"
+          >
+            Add
+          </button>
+        </form>
+
+        <ul className="flex flex-col gap-2.5 list-none p-0 m-0">
+          <${AnimatePresence} initial=${false}>
+            ${visible.map(item => html`
+              <${RoutineRow}
+                key=${item.id}
+                item=${item}
+                onComplete=${() => completeItem(item.id)}
+                onRemove=${() => removeItem(item.id)}
+              />
+            `)}
+          <//>
+        </ul>
+
+        ${visible.length === 0 && html`
+          <div className="text-center py-14 px-6 rounded-2xl border border-white/10 bg-white/[0.02]">
+            <div className="text-4xl mb-2" aria-hidden="true">✨</div>
+            <p className="font-medium text-slate-200">All done for tonight</p>
+            <p className="text-sm mt-1 text-slate-400">
+              ${total === 0
+                ? "Add an item above to start your routine."
+                : "Tap Reset for Tonight when you're ready for tomorrow."}
+            </p>
+          </div>
+        `}
+
+        <p className="text-center text-xs text-slate-500 mt-6">
+          Swipe right to complete · Tap × to remove
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function RoutineRow({ item, onComplete, onRemove }) {
+  const surfaceRef = useRef(null);
+  const stateRef = useRef({ startX: 0, startY: 0, startT: 0, dx: 0, dragging: false, locked: null, exiting: false });
+  const [progress, setProgress] = useState(0); // 0..1 for visual feedback during swipe
+
+  useEffect(() => {
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    const s = stateRef.current;
 
     function onStart(e) {
-      const t = (e.touches ? e.touches[0] : e);
-      startX = t.clientX;
-      startY = t.clientY;
-      startT = performance.now();
-      dx = 0;
-      dragging = true;
-      locked = null;
-      surface.classList.add("dragging");
-      surface.classList.remove("snap");
+      if (s.exiting) return;
+      const t = e.touches ? e.touches[0] : e;
+      s.startX = t.clientX;
+      s.startY = t.clientY;
+      s.startT = performance.now();
+      s.dx = 0;
+      s.dragging = true;
+      s.locked = null;
+      surface.style.transition = 'none';
     }
     function onMove(e) {
-      if (!dragging) return;
-      const t = (e.touches ? e.touches[0] : e);
-      const ddx = t.clientX - startX;
-      const ddy = t.clientY - startY;
-      if (locked === null) {
+      if (!s.dragging) return;
+      const t = e.touches ? e.touches[0] : e;
+      const ddx = t.clientX - s.startX;
+      const ddy = t.clientY - s.startY;
+      if (s.locked === null) {
         if (Math.abs(ddx) > 6 || Math.abs(ddy) > 6) {
-          locked = Math.abs(ddx) > Math.abs(ddy) ? "x" : "y";
+          s.locked = Math.abs(ddx) > Math.abs(ddy) ? 'x' : 'y';
         }
       }
-      if (locked !== "x") return;
+      if (s.locked !== 'x') return;
       if (e.cancelable) e.preventDefault();
-      dx = Math.max(0, ddx); // only swipe right
-      surface.style.transform = "translateX(" + dx + "px)";
+      s.dx = Math.max(0, ddx);
+      surface.style.transform = 'translateX(' + s.dx + 'px)';
+      const w = surface.offsetWidth || 1;
+      setProgress(Math.min(1, s.dx / w));
     }
     function onEnd() {
-      if (!dragging) return;
-      dragging = false;
-      surface.classList.remove("dragging");
-      surface.classList.add("snap");
+      if (!s.dragging) return;
+      s.dragging = false;
       const width = surface.offsetWidth || 1;
-      const dt = Math.max(1, performance.now() - startT);
-      const v = dx / dt;
-      const past = (dx / width) > SWIPE_THRESHOLD || v > SWIPE_VELOCITY;
-      if (locked === "x" && past) {
-        surface.style.transform = "translateX(110%)";
-        completeItem(id, li);
+      const dt = Math.max(1, performance.now() - s.startT);
+      const v = s.dx / dt;
+      const past = (s.dx / width) > SWIPE_THRESHOLD || v > SWIPE_VELOCITY;
+      surface.style.transition = 'transform 220ms cubic-bezier(.2,.8,.2,1)';
+      if (s.locked === 'x' && past) {
+        s.exiting = true;
+        surface.style.transform = 'translateX(110%)';
+        setProgress(1);
+        window.setTimeout(() => onComplete(), 170);
       } else {
-        surface.style.transform = "translateX(0)";
+        surface.style.transform = 'translateX(0)';
+        setProgress(0);
       }
     }
 
-    surface.addEventListener("touchstart", onStart, { passive: true });
-    surface.addEventListener("touchmove", onMove, { passive: false });
-    surface.addEventListener("touchend", onEnd);
-    surface.addEventListener("touchcancel", onEnd);
+    surface.addEventListener('touchstart', onStart, { passive: true });
+    surface.addEventListener('touchmove', onMove, { passive: false });
+    surface.addEventListener('touchend', onEnd);
+    surface.addEventListener('touchcancel', onEnd);
 
-    // Mouse fallback for desktop testing
-    surface.addEventListener("mousedown", function (e) {
-      onStart(e);
-      function mm(ev) { onMove(ev); }
-      function mu() {
-        document.removeEventListener("mousemove", mm);
-        document.removeEventListener("mouseup", mu);
-        onEnd();
-      }
-      document.addEventListener("mousemove", mm);
-      document.addEventListener("mouseup", mu);
-    });
-  }
+    return () => {
+      surface.removeEventListener('touchstart', onStart);
+      surface.removeEventListener('touchmove', onMove);
+      surface.removeEventListener('touchend', onEnd);
+      surface.removeEventListener('touchcancel', onEnd);
+    };
+  }, [onComplete]);
 
-  function completeItem(id, li) {
-    const item = state.items.find(i => i.id === id);
-    if (!item || item.done) return;
-    item.done = true;
-    save();
-    collapseAndRemove(li);
-    updateCounter();
-  }
+  return html`
+    <${motion.li}
+      layout
+      initial=${{ opacity: 0, height: 0 }}
+      animate=${{ opacity: 1, height: 'auto' }}
+      exit=${{ opacity: 0, height: 0 }}
+      transition=${{ duration: 0.26, ease: [0.2, 0.8, 0.2, 1] }}
+      className="relative overflow-hidden rounded-xl"
+    >
+      <div
+        className="absolute inset-0 flex items-center pl-6 font-bold tracking-wider text-white pointer-events-none"
+        style=${{
+          background: 'linear-gradient(90deg, #10b981, #34d399)',
+          opacity: 0.4 + progress * 0.6
+        }}
+      >
+        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        DONE
+      </div>
+      <div
+        ref=${surfaceRef}
+        className="relative bg-slate-900/85 border border-white/[0.06] backdrop-blur-sm rounded-xl flex items-center gap-2 pl-5 pr-2 py-4 shadow-card"
+        style=${{ touchAction: 'pan-y' }}
+      >
+        <span className="flex-1 text-[17px] leading-snug select-none">${item.text}</span>
+        <button
+          type="button"
+          onClick=${(e) => { e.stopPropagation(); onRemove(); }}
+          aria-label="Remove item"
+          className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 active:bg-rose-500/20 transition-colors text-2xl leading-none"
+        >
+          ×
+        </button>
+      </div>
+    <//>
+  `;
+}
 
-  function removeItem(id) {
-    const idx = state.items.findIndex(i => i.id === id);
-    if (idx === -1) return;
-    state.items.splice(idx, 1);
-    save();
-    const li = listEl.querySelector('li[data-id="' + cssEscape(id) + '"]');
-    if (li) collapseAndRemove(li);
-    else render();
-  }
-
-  function collapseAndRemove(li) {
-    const h = li.offsetHeight;
-    li.style.height = h + "px";
-    // force reflow so height transition kicks in
-    void li.offsetHeight;
-    li.classList.add("removing");
-    li.addEventListener("transitionend", function handler(ev) {
-      if (ev.propertyName !== "height") return;
-      li.removeEventListener("transitionend", handler);
-      li.remove();
-      if (listEl.children.length === 0) render();
-    });
-  }
-
-  function cssEscape(s) {
-    if (window.CSS && CSS.escape) return CSS.escape(s);
-    return String(s).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
-  }
-
-  addForm.addEventListener("submit", function (e) {
-    e.preventDefault();
-    const text = addInput.value.trim();
-    if (!text) return;
-    state.items.push(makeItem(text));
-    save();
-    addInput.value = "";
-    render();
-  });
-
-  resetBtn.addEventListener("click", function () {
-    const completed = state.items.filter(i => i.done).length;
-    const msg = completed > 0
-      ? "Reset " + completed + " completed item" + (completed === 1 ? "" : "s") + " back to the list?"
-      : "Nothing to reset — all items are already on the list.";
-    if (completed === 0) { alert(msg); return; }
-    if (!confirm(msg)) return;
-    for (const it of state.items) it.done = false;
-    save();
-    render();
-  });
-
-  setDateLine();
-  render();
-})();
+createRoot(document.getElementById('root')).render(React.createElement(App));
 </script>
 </body>
 </html>
