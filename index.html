@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#0b1020" />
+<title>Nighttime Routine</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-2: #131a33;
+    --card: #1a2244;
+    --text: #e8ecff;
+    --muted: #8a93b8;
+    --accent: #6c8cff;
+    --good: #2ecc71;
+    --danger: #ff5c7a;
+    --row-h: 64px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+  }
+  body {
+    min-height: 100vh;
+    padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  header {
+    margin-bottom: 16px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+  }
+  header .sub {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 12px 0 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .stats button {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid rgba(108, 140, 255, 0.4);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .add-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .add-row input {
+    flex: 1;
+    background: var(--bg-2);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text);
+    padding: 14px 14px;
+    border-radius: 12px;
+    font-size: 16px;
+    outline: none;
+  }
+  .add-row input:focus {
+    border-color: var(--accent);
+  }
+  .add-row button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0 18px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .item {
+    position: relative;
+    height: var(--row-h);
+    margin-bottom: 10px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--good);
+  }
+  .item .bg-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding-left: 24px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+  }
+  .item .bg-label svg {
+    margin-right: 8px;
+  }
+  .item .surface {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    background: var(--card);
+    display: flex;
+    align-items: center;
+    padding: 0 14px 0 18px;
+    border-radius: 14px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 20px rgba(0,0,0,0.25);
+    will-change: transform;
+    touch-action: pan-y;
+  }
+  .item .surface.dragging {
+    transition: none;
+  }
+  .item .surface.snap {
+    transition: transform 220ms cubic-bezier(.2,.8,.2,1);
+  }
+  .item .text {
+    flex: 1;
+    font-size: 17px;
+    line-height: 1.25;
+    padding-right: 12px;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .item .del {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .item .del:active {
+    color: var(--danger);
+    background: rgba(255, 92, 122, 0.12);
+  }
+  .item.removing {
+    transition: height 260ms ease, margin 260ms ease, opacity 200ms ease;
+    height: 0;
+    margin-bottom: 0;
+    opacity: 0;
+  }
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 16px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .hint {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Nighttime Routine</h1>
+    <div class="sub" id="dateLine"></div>
+  </header>
+
+  <div class="stats">
+    <span id="counter">0 left</span>
+    <button id="resetBtn" type="button">Reset for Tonight</button>
+  </div>
+
+  <form class="add-row" id="addForm">
+    <input id="addInput" type="text" placeholder="Add an item…" autocomplete="off" />
+    <button type="submit">Add</button>
+  </form>
+
+  <ul id="list"></ul>
+  <div class="hint">Swipe right to complete · Tap × to remove</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const STORAGE_KEY = "nighttime-routine.v1";
+  const SWIPE_THRESHOLD = 0.45; // fraction of row width
+  const SWIPE_VELOCITY = 0.6;   // px/ms
+
+  const DEFAULT_ITEMS = [
+    "Go through backpacks",
+    "Fill up water bottles",
+    "Make lunches",
+    "Lay out Aubrey's hair stuff and lotion",
+    "Pick out kids' clothes",
+    "Review next day's calendar",
+    "Plan out next day (lead, make decisions)",
+    "Set alarm",
+    "Take GABA, allergy pills, hair pills",
+    "Lay out work clothes",
+    "Plan next day workout",
+    "Lay out workout clothes",
+    "Get workout bag ready",
+    "Put coffee cup by the fridge",
+    "Prep pre-workout",
+    "16 oz of water in shaker bottle",
+    "Give kids allergy medicine and vitamins",
+    "Brush teeth, floss, mouthwash"
+  ];
+
+  const listEl = document.getElementById("list");
+  const counterEl = document.getElementById("counter");
+  const dateLineEl = document.getElementById("dateLine");
+  const addForm = document.getElementById("addForm");
+  const addInput = document.getElementById("addInput");
+  const resetBtn = document.getElementById("resetBtn");
+
+  /** state shape: { items: [{ id, text, done }] } */
+  let state = load();
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.items)) return parsed;
+      }
+    } catch (e) { /* fall through */ }
+    return { items: DEFAULT_ITEMS.map(makeItem) };
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) { /* quota or private mode — ignore */ }
+  }
+
+  function makeItem(text) {
+    return {
+      id: (Date.now().toString(36) + Math.random().toString(36).slice(2, 7)),
+      text: text,
+      done: false
+    };
+  }
+
+  function setDateLine() {
+    const d = new Date();
+    const opts = { weekday: "long", month: "long", day: "numeric" };
+    dateLineEl.textContent = d.toLocaleDateString(undefined, opts);
+  }
+
+  function updateCounter() {
+    const left = state.items.filter(i => !i.done).length;
+    counterEl.textContent = left + (left === 1 ? " left" : " left");
+  }
+
+  function render() {
+    listEl.innerHTML = "";
+    const visible = state.items.filter(i => !i.done);
+    if (visible.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.innerHTML = "All done for tonight ✨<br/>Tap <em>Reset for Tonight</em> when you're ready.";
+      listEl.appendChild(empty);
+    } else {
+      for (const item of visible) {
+        listEl.appendChild(renderItem(item));
+      }
+    }
+    updateCounter();
+  }
+
+  function renderItem(item) {
+    const li = document.createElement("li");
+    li.className = "item";
+    li.dataset.id = item.id;
+
+    const bg = document.createElement("div");
+    bg.className = "bg-label";
+    bg.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> DONE';
+
+    const surface = document.createElement("div");
+    surface.className = "surface";
+
+    const text = document.createElement("div");
+    text.className = "text";
+    text.textContent = item.text;
+
+    const del = document.createElement("button");
+    del.className = "del";
+    del.type = "button";
+    del.setAttribute("aria-label", "Remove item");
+    del.textContent = "×";
+    del.addEventListener("click", function (e) {
+      e.stopPropagation();
+      removeItem(item.id);
+    });
+
+    surface.appendChild(text);
+    surface.appendChild(del);
+    li.appendChild(bg);
+    li.appendChild(surface);
+
+    attachSwipe(li, surface, item.id);
+    return li;
+  }
+
+  function attachSwipe(li, surface, id) {
+    let startX = 0;
+    let startY = 0;
+    let startT = 0;
+    let dx = 0;
+    let dragging = false;
+    let locked = null; // null | "x" | "y"
+
+    function onStart(e) {
+      const t = (e.touches ? e.touches[0] : e);
+      startX = t.clientX;
+      startY = t.clientY;
+      startT = performance.now();
+      dx = 0;
+      dragging = true;
+      locked = null;
+      surface.classList.add("dragging");
+      surface.classList.remove("snap");
+    }
+    function onMove(e) {
+      if (!dragging) return;
+      const t = (e.touches ? e.touches[0] : e);
+      const ddx = t.clientX - startX;
+      const ddy = t.clientY - startY;
+      if (locked === null) {
+        if (Math.abs(ddx) > 6 || Math.abs(ddy) > 6) {
+          locked = Math.abs(ddx) > Math.abs(ddy) ? "x" : "y";
+        }
+      }
+      if (locked !== "x") return;
+      if (e.cancelable) e.preventDefault();
+      dx = Math.max(0, ddx); // only swipe right
+      surface.style.transform = "translateX(" + dx + "px)";
+    }
+    function onEnd() {
+      if (!dragging) return;
+      dragging = false;
+      surface.classList.remove("dragging");
+      surface.classList.add("snap");
+      const width = surface.offsetWidth || 1;
+      const dt = Math.max(1, performance.now() - startT);
+      const v = dx / dt;
+      const past = (dx / width) > SWIPE_THRESHOLD || v > SWIPE_VELOCITY;
+      if (locked === "x" && past) {
+        surface.style.transform = "translateX(110%)";
+        completeItem(id, li);
+      } else {
+        surface.style.transform = "translateX(0)";
+      }
+    }
+
+    surface.addEventListener("touchstart", onStart, { passive: true });
+    surface.addEventListener("touchmove", onMove, { passive: false });
+    surface.addEventListener("touchend", onEnd);
+    surface.addEventListener("touchcancel", onEnd);
+
+    // Mouse fallback for desktop testing
+    surface.addEventListener("mousedown", function (e) {
+      onStart(e);
+      function mm(ev) { onMove(ev); }
+      function mu() {
+        document.removeEventListener("mousemove", mm);
+        document.removeEventListener("mouseup", mu);
+        onEnd();
+      }
+      document.addEventListener("mousemove", mm);
+      document.addEventListener("mouseup", mu);
+    });
+  }
+
+  function completeItem(id, li) {
+    const item = state.items.find(i => i.id === id);
+    if (!item || item.done) return;
+    item.done = true;
+    save();
+    collapseAndRemove(li);
+    updateCounter();
+  }
+
+  function removeItem(id) {
+    const idx = state.items.findIndex(i => i.id === id);
+    if (idx === -1) return;
+    state.items.splice(idx, 1);
+    save();
+    const li = listEl.querySelector('li[data-id="' + cssEscape(id) + '"]');
+    if (li) collapseAndRemove(li);
+    else render();
+  }
+
+  function collapseAndRemove(li) {
+    const h = li.offsetHeight;
+    li.style.height = h + "px";
+    // force reflow so height transition kicks in
+    void li.offsetHeight;
+    li.classList.add("removing");
+    li.addEventListener("transitionend", function handler(ev) {
+      if (ev.propertyName !== "height") return;
+      li.removeEventListener("transitionend", handler);
+      li.remove();
+      if (listEl.children.length === 0) render();
+    });
+  }
+
+  function cssEscape(s) {
+    if (window.CSS && CSS.escape) return CSS.escape(s);
+    return String(s).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+  }
+
+  addForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const text = addInput.value.trim();
+    if (!text) return;
+    state.items.push(makeItem(text));
+    save();
+    addInput.value = "";
+    render();
+  });
+
+  resetBtn.addEventListener("click", function () {
+    const completed = state.items.filter(i => i.done).length;
+    const msg = completed > 0
+      ? "Reset " + completed + " completed item" + (completed === 1 ? "" : "s") + " back to the list?"
+      : "Nothing to reset — all items are already on the list.";
+    if (completed === 0) { alert(msg); return; }
+    if (!confirm(msg)) return;
+    for (const it of state.items) it.done = false;
+    save();
+    render();
+  });
+
+  setDateLine();
+  render();
+})();
+</script>
+</body>
+</html>
